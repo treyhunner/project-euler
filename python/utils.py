@@ -1,5 +1,41 @@
+from bisect import bisect_left
 from collections import defaultdict
+from itertools import count, takewhile
 from math import floor, sqrt
+
+
+def binary_search(sequence, item):
+    position = bisect_left(sequence, item, 0, len(sequence))
+    return (position < len(sequence) and sequence[position] == item)
+
+
+class CachedIterable:
+
+    """Wraps and iterable and caches it."""
+
+    def __init__(self, iterable):
+        self.iterator = iter(iterable)
+        self.data = []
+
+    def __iter__(self):
+        for n in count():
+            while len(self.data) <= n:
+                self.data.append(next(self.iterator))
+            yield self.data[n]
+
+
+class CachedSortedIterable(CachedIterable):
+
+    """Wraps and caches sorted iterables."""
+
+    def up_to(self, value):
+        def less_than_or_equal(n): return n <= value
+        return takewhile(less_than_or_equal, self)
+
+    def __contains__(self, n):
+        while not self.data or self.data[-1] < n:
+            self.data.append(next(self.iterator))
+        return binary_search(self.data, n)
 
 
 def primes_up_to(limit):
